@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meesho Flash Deals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#511449;
+    --plum-deep:#36092F;
+    --pink:#E8368F;
+    --orange:#FF7A30;
+    --bg:#FFF3F8;
+    --ink:#241627;
+    --muted:#8A7A90;
+    --line:#F0DCE8;
+    --green:#15895F;
+    --card:#FFFFFF;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:linear-gradient(180deg,#FBE6F1 0%,#F3E6FB 45%,#EDEAFB 100%);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100%;
+    padding:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) body{background:linear-gradient(180deg,#2A1226,#1E1430);}
+  }
+
+  /* ---- Phone frame ---- */
+  .phone{
+    width:100%;
+    max-width:420px;
+    height:min(900px, 96vh);
+    background:#000;
+    border-radius:38px;
+    padding:12px;
+    box-shadow:0 30px 60px -20px rgba(54,9,47,.45), 0 0 0 1px rgba(54,9,47,.06);
+  }
+  .screen{
+    position:relative;
+    width:100%;
+    height:100%;
+    background:var(--bg);
+    border-radius:28px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .statusbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 20px 2px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink);
+    flex-shrink:0;
+  }
+  .statusbar .icons{display:flex;gap:5px;align-items:center;}
+  .statusbar svg{display:block;}
+
+  .appheader{
+    background:linear-gradient(120deg,var(--plum) 0%,#7A1F5C 100%);
+    color:#fff;
+    padding:14px 18px 18px;
+    flex-shrink:0;
+  }
+  .appheader .row1{display:flex;align-items:center;justify-content:space-between;}
+  .appheader .brand{display:flex;align-items:center;gap:8px;}
+  .appheader .brand svg{flex-shrink:0;}
+  .appheader h2{font-family:'Sora',sans-serif;font-size:18px;font-weight:700;margin:0;}
+  .sale-chip{
+    background:var(--orange);color:#fff;font-size:10px;font-weight:800;
+    padding:4px 9px;border-radius:7px;letter-spacing:.3px;flex-shrink:0;
+  }
+  .loc-pill{
+    display:inline-flex;align-items:center;gap:5px;
+    background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.3);
+    padding:4px 10px 4px 8px;border-radius:99px;
+    font-size:11.5px;font-weight:600;margin-top:10px;
+  }
+  .appheader .sub{font-size:12px;opacity:.88;margin-top:8px;line-height:1.5;max-width:280px;}
+
+  .content{
+    flex:1;
+    overflow-y:auto;
+    padding:14px 14px 10px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .content::-webkit-scrollbar{width:0;}
+
+  .section-label{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--muted);
+    margin:4px 2px 10px;
+  }
+  .section-label b{color:var(--plum-deep);font-weight:700;}
+
+  /* ---- Deal card ---- */
+  .deal{
+    position:relative;
+    background:var(--card);
+    border-radius:16px;
+    display:flex;
+    gap:12px;
+    padding:12px;
+    margin-bottom:12px;
+    border:1px solid var(--line);
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .deal:active{transform:scale(.98);}
+  .deal:hover{box-shadow:0 8px 20px -12px rgba(81,20,73,.35);}
+
+  .thumb{
+    width:64px;height:64px;border-radius:12px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .ribbon{
+    position:absolute;top:-6px;left:-6px;
+    background:var(--orange);color:#fff;
+    font-size:8.5px;font-weight:700;
+    padding:2px 6px 2px 5px;
+    border-radius:0 0 6px 0;
+    display:flex;align-items:center;gap:2px;
+  }
+
+  .deal-info{flex:1;min-width:0;}
+  .deal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
+  .deal-name{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.3;}
+  .deal-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+  .price-row{display:flex;align-items:baseline;gap:6px;margin-top:6px;}
+  .price-now{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:var(--plum-deep);}
+  .price-was{font-size:11.5px;color:var(--muted);text-decoration:line-through;}
+  .price-off{font-size:11px;font-weight:700;color:var(--green);}
+  .deal-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:7px;}
+  .dist{display:flex;align-items:center;gap:3px;font-size:10.5px;color:var(--muted);font-weight:600;}
+  .timer{
+    font-family:'Sora',sans-serif;
+    font-size:11px;font-weight:700;
+    color:var(--orange);
+    display:flex;align-items:center;gap:4px;
+    background:#FFF0E5;padding:3px 8px;border-radius:99px;
+  }
+  .timer.urgent{color:#D32F4F;background:#FDE6EC;}
+  .left-badge{
+    position:absolute;top:10px;right:10px;
+    font-size:9.5px;font-weight:700;color:#D32F4F;
+    display:flex;align-items:center;gap:4px;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:#D32F4F;animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  .bottomnav{
+    display:flex;
+    border-top:1px solid var(--line);
+    background:#fff;
+    flex-shrink:0;
+  }
+  .navitem{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:9px 0 10px;font-size:10px;font-weight:600;color:var(--muted);
+  }
+  .navitem.active{color:var(--pink);}
+  .navitem svg{display:block;}
+
+  /* ---- Detail screen ---- */
+  .detail{
+    position:absolute;inset:0;
+    background:var(--bg);
+    display:flex;flex-direction:column;
+    transform:translateX(100%);
+    transition:transform .32s cubic-bezier(.22,.9,.32,1);
+    z-index:5;
+  }
+  .detail.open{transform:translateX(0);}
+  .detail-header{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 16px;background:var(--card);
+    border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  .backbtn{
+    width:30px;height:30px;border-radius:50%;
+    background:#F6EEF4;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;border:none;flex-shrink:0;
+  }
+  .detail-header span{font-weight:700;font-size:14px;font-family:'Sora',sans-serif;color:var(--plum-deep);}
+  .detail-body{flex:1;overflow-y:auto;padding:0 0 16px;}
+  .detail-hero{
+    height:170px;display:flex;align-items:center;justify-content:center;
+    margin:14px 16px 0;border-radius:18px;position:relative;
+  }
+  .detail-hero .left-badge{top:12px;right:12px;background:rgba(255,255,255,.9);padding:4px 9px;border-radius:99px;}
+  .detail-info{padding:16px;}
+  .detail-info h3{font-family:'Sora',sans-serif;font-size:16px;margin:0 0 4px;}
+  .detail-info .variant{font-size:12px;color:var(--muted);margin-bottom:10px;}
+  .detail-price{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;}
+  .detail-price .now{font-family:'Sora',sans-serif;font-size:24px;font-weight:800;color:var(--plum-deep);}
+  .detail-price .was{font-size:14px;color:var(--muted);text-decoration:line-through;}
+  .detail-price .off{font-size:12.5px;font-weight:700;color:#fff;background:var(--green);padding:2px 8px;border-radius:6px;}
+  .detail-timer{
+    margin-top:12px;
+    background:#FFF0E5;border:1px solid #FFD9BB;
+    border-radius:12px;padding:10px 14px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .detail-timer .lbl{font-size:11.5px;color:#9A5A1E;font-weight:600;}
+  .detail-timer .val{font-family:'Sora',sans-serif;font-weight:800;font-size:15px;color:var(--orange);}
+  .paymethod{margin-top:16px;}
+  .paymethod h4{font-size:12.5px;font-weight:700;color:var(--muted);margin:0 0 8px;}
+  .paychips{display:flex;gap:8px;}
+  .paychip{
+    flex:1;border:1.5px solid var(--line);border-radius:11px;
+    padding:9px 6px;text-align:center;cursor:pointer;
+    font-size:11.5px;font-weight:700;color:var(--muted);
+    background:#fff;transition:all .15s ease;
+  }
+  .paychip.active{
+    border-color:var(--pink);color:var(--pink);
+    background:#FDF0F7;
+  }
+  .paychip .sub{display:block;font-size:9.5px;font-weight:500;color:var(--muted);margin-top:1px;}
+  .paychip.active .sub{color:#C22577;}
+  .verify{margin-top:16px;}
+  .verify h4{font-size:12.5px;font-weight:700;color:var(--muted);margin:0 0 8px;}
+  .vitem{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink);padding:6px 0;}
+  .vitem svg{flex-shrink:0;}
+  .note{
+    margin-top:16px;background:#F3E9F7;border-radius:12px;padding:12px 14px;
+    font-size:11.5px;color:#5A3A64;line-height:1.5;
+  }
+  .cta-bar{
+    padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));
+    background:var(--card);border-top:1px solid var(--line);flex-shrink:0;
+  }
+  .buybtn{
+    width:100%;border:none;border-radius:13px;
+    background:linear-gradient(120deg,var(--pink),#C22577);
+    color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:14.5px;
+    padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .buybtn .sub{font-weight:500;font-size:11px;opacity:.9;}
+
+  /* ---- Success overlay ---- */
+  .success{
+    position:absolute;inset:0;background:rgba(36,22,39,.55);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:10;
+  }
+  .success.show{opacity:1;pointer-events:auto;}
+  .success-card{
+    background:#fff;border-radius:20px;padding:26px 24px;width:84%;text-align:center;
+    transform:scale(.92);transition:transform .25s ease;
+  }
+  .success.show .success-card{transform:scale(1);}
+  .success-card .tick{
+    width:52px;height:52px;border-radius:50%;background:#E6F6EF;
+    display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
+  }
+  .success-card h4{font-family:'Sora',sans-serif;margin:0 0 6px;font-size:15.5px;}
+  .success-card p{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0 0 16px;}
+  .success-card button{
+    border:none;background:var(--plum);color:#fff;font-weight:700;font-size:13px;
+    padding:10px 20px;border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="screen">
+
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="icons">
+        <svg width="14" height="10" viewBox="0 0 14 10"><rect width="14" height="10" rx="2" fill="none" stroke="#241627" stroke-width="1"/><rect x="2" y="2" width="8" height="6" fill="#241627"/></svg>
+      </span>
+    </div>
+
+    <div class="appheader">
+      <div class="row1">
+        <div class="brand">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 12 12 3l2.5 2.5L7 13l7 7-2.5 2.5z" fill="#fff"/><path d="M13 12 20 5l1.5 1.5L15 13l5 5-1.5 1.5z" fill="#fff" fill-opacity=".7"/></svg>
+          <h2>Flash Deals</h2>
+        </div>
+        <span class="sale-chip">48-HR SALE</span>
+      </div>
+      <div class="loc-pill">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 22s7-7.2 7-12.5A7 7 0 1 0 5 9.5C5 14.8 12 22 12 22z" fill="#fff"/></svg>
+        Andheri East &middot; deals within 10 km
+      </div>
+      <p class="sub">Today's special local prices — up to 35% off. Once the clock runs out, the deal's gone!</p>
+    </div>
+
+    <div class="content" id="listView">
+      <div class="section-label">6 flash deals live near you right now</div>
+      <div id="dealList"></div>
+    </div>
+
+    <div class="bottomnav">
+      <div class="navitem">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 11.5 12 4l8 7.5" stroke="#8A7A90" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="#8A7A90" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Home
+      </div>
+      <div class="navitem active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 12 12 3l2.5 2.5L7 13l7 7-2.5 2.5z" fill="#E8368F"/><path d="M13 12 20 5l1.5 1.5L15 13l5 5-1.5 1.5z" fill="#E8368F" fill-opacity=".7"/></svg>
+        Deals
+      </div>
+      <div class="navitem">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="#8A7A90" stroke-width="1.8"/><path d="M8 9h8M8 13h5" stroke="#8A7A90" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Orders
+      </div>
+      <div class="navitem">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.5" r="3.4" stroke="#8A7A90" stroke-width="1.8"/><path d="M5 20c1.3-3.8 4.2-5.7 7-5.7s5.7 1.9 7 5.7" stroke="#8A7A90" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Account
+      </div>
+    </div>
+
+    <!-- Detail screen -->
+    <div class="detail" id="detailScreen">
+      <div class="detail-header">
+        <button class="backbtn" id="backBtn" aria-label="Back">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 5 7 12l8 7" stroke="#511449" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span>Deal details</span>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+      <div class="cta-bar">
+        <button class="buybtn" id="buyBtn">
+          <span id="buyLabel">Buy now</span>
+          <span class="sub" id="buySub">&nbsp;· pay by UPI</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="success" id="successOverlay">
+      <div class="success-card">
+        <div class="tick">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#15895F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h4>Order confirmed</h4>
+        <p id="successMsg">Your flash deal is on its way from a store near you — delivered within a few hours.</p>
+        <button id="closeSuccess">Back to deals</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const ICONS = {
+  kurta: {bg:'#F2D9EB', fg:'#9C2D74', path:'M9 4l3 2 3-2 2 3-2 2v9H7v-9L5 7z'},
+  bedsheet: {bg:'#DCE8F7', fg:'#2E5FA3', path:'M4 8h16v10H4z M4 8l4-4h8l4 4'},
+  kitchen: {bg:'#FBE3D0', fg:'#C06A1E', path:'M6 10a6 6 0 0012 0M6 10H4m14 0h2M12 4v2'},
+  backpack: {bg:'#DDEFE3', fg:'#1E7A4C', path:'M8 9V7a4 4 0 018 0v2M6 9h12v11H6z M9 13h6'},
+  earrings: {bg:'#F7E3EC', fg:'#B4306F', circles:true},
+  lamp: {bg:'#FDE9C8', fg:'#B5790F', path:'M12 3v3M7 9a5 5 0 0110 0c0 2.5-2 3.5-2 6H9c0-2.5-2-3.5-2-6z M9 18h6M10 21h4'}
+};
+
+function iconSvg(key){
+  const i = ICONS[key];
+  if(i.circles){
+    return `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="9" r="3.4" stroke="${i.fg}" stroke-width="1.8"/><circle cx="16" cy="16" r="3.4" stroke="${i.fg}" stroke-width="1.8"/></svg>`;
+  }
+  return `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="${i.path}" stroke="${i.fg}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+const deals = [
+  {id:1, icon:'kurta', name:'Cotton Kurta — Size M', variant:'Sealed pack · unopened', was:699, now:549, dist:'1.2 km', left:1, mins:320, loc:'Andheri East store'},
+  {id:2, icon:'bedsheet', name:'Double Bedsheet Set', variant:'Sealed pack · cotton blend', was:899, now:629, dist:'2.6 km', left:2, mins:140, loc:'Chakala store'},
+  {id:3, icon:'kitchen', name:'Non-stick Kadai Set (2 pc)', variant:'Sealed box · unopened', was:1099, now:799, dist:'0.8 km', left:1, mins:58, loc:'Andheri East store'},
+  {id:4, icon:'backpack', name:'Laptop Backpack 32L', variant:'Sealed pack · grey', was:1299, now:949, dist:'3.4 km', left:3, mins:410, loc:'Marol store'},
+  {id:5, icon:'earrings', name:'Oxidised Earrings Combo', variant:'Sealed pack · set of 4', was:349, now:259, dist:'1.9 km', left:1, mins:95, loc:'Sakinaka store'},
+  {id:6, icon:'lamp', name:'LED Study Lamp', variant:'Sealed box · unopened', was:649, now:479, dist:'4.1 km', left:2, mins:205, loc:'Marol store'},
+];
+
+const listEl = document.getElementById('dealList');
+const detailScreen = document.getElementById('detailScreen');
+const detailBody = document.getElementById('detailBody');
+const successOverlay = document.getElementById('successOverlay');
+let activeDeal = null;
+let selectedPay = 'UPI';
+
+const paySub = {UPI:'pay by UPI', Card:'pay by card', COD:'pay cash on delivery'};
+
+function updateBuyBtn(){
+  document.getElementById('buySub').textContent = '\u00A0\u00B7 ' + paySub[selectedPay];
+}
+
+function fmt(mins){
+  const h = Math.floor(mins/60), m = mins%60;
+  return (h>0? h+'h ' : '') + String(m).padStart(2,'0')+'m';
+}
+function pct(was, now){ return Math.round((1 - now/was)*100); }
+
+function renderList(){
+  listEl.innerHTML = deals.map(d => `
+    <div class="deal" data-id="${d.id}">
+      ${d.left<=1 ? `<div class="left-badge"><span class="dot"></span>Only ${d.left} left</div>` : ''}
+      <div class="thumb" style="background:${ICONS[d.icon].bg}">
+        <div class="ribbon">⚡ flash</div>
+        ${iconSvg(d.icon)}
+      </div>
+      <div class="deal-info">
+        <div class="deal-top">
+          <div>
+            <div class="deal-name">${d.name}</div>
+            <div class="deal-meta">${d.variant}</div>
+          </div>
+        </div>
+        <div class="price-row">
+          <span class="price-now">₹${d.now}</span>
+          <span class="price-was">₹${d.was}</span>
+          <span class="price-off">${pct(d.was,d.now)}% off</span>
+        </div>
+        <div class="deal-bottom">
+          <span class="dist">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 22s7-7.2 7-12.5A7 7 0 1 0 5 9.5C5 14.8 12 22 12 22z" fill="#8A7A90"/></svg>
+            ${d.dist} away
+          </span>
+          <span class="timer" data-mins="${d.id}">Expires in ${fmt(d.mins)}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  listEl.querySelectorAll('.deal').forEach(el=>{
+    el.addEventListener('click', ()=> openDetail(Number(el.dataset.id)));
+  });
+}
+
+function openDetail(id){
+  activeDeal = deals.find(d=>d.id===id);
+  detailBody.innerHTML = `
+    <div class="detail-hero" style="background:${ICONS[activeDeal.icon].bg}">
+      <div class="left-badge">${activeDeal.left} left near you</div>
+      <div style="transform:scale(2.6)">${iconSvg(activeDeal.icon)}</div>
+    </div>
+    <div class="detail-info">
+      <h3>${activeDeal.name}</h3>
+      <div class="variant">${activeDeal.variant} · ${activeDeal.loc}</div>
+      <div class="detail-price">
+        <span class="now">₹${activeDeal.now}</span>
+        <span class="was">₹${activeDeal.was}</span>
+        <span class="off">${pct(activeDeal.was, activeDeal.now)}% off</span>
+      </div>
+      <div class="detail-timer">
+        <span class="lbl">Offer expires in</span>
+        <span class="val" id="detailTimerVal">${fmt(activeDeal.mins)}</span>
+      </div>
+      <div class="paymethod">
+        <h4>Choose payment method</h4>
+        <div class="paychips" id="payChips">
+          <div class="paychip active" data-pay="UPI">UPI<span class="sub">instant</span></div>
+          <div class="paychip" data-pay="Card">Card<span class="sub">debit/credit</span></div>
+          <div class="paychip" data-pay="COD">Cash on Delivery<span class="sub">pay at door</span></div>
+        </div>
+      </div>
+      <div class="verify">
+        <h4>What you're getting</h4>
+        <div class="vitem"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#15895F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Sealed pack — never opened or used</div>
+        <div class="vitem"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#15895F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Quality checked before listing</div>
+        <div class="vitem"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#15895F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Correct item &amp; variant guaranteed</div>
+        <div class="vitem"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#15895F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Ships from a store near you, today</div>
+      </div>
+      <div class="note">Exclusive local flash price — today only. Limited stock is reserved just for shoppers nearby, and once the timer hits zero, this deal won't come back.</div>
+    </div>
+  `;
+  detailScreen.classList.add('open');
+
+  selectedPay = 'UPI';
+  updateBuyBtn();
+  detailBody.querySelectorAll('.paychip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      detailBody.querySelectorAll('.paychip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedPay = chip.dataset.pay;
+      updateBuyBtn();
+    });
+  });
+}
+
+document.getElementById('backBtn').addEventListener('click', ()=> detailScreen.classList.remove('open'));
+
+const successCopy = {
+  UPI: 'Paid by UPI. Your flash deal is on its way from a store near you — delivered within a few hours.',
+  Card: 'Paid by card. Your flash deal is on its way from a store near you — delivered within a few hours.',
+  COD: 'Your flash deal is reserved! Pay cash when it arrives from a store near you, within a few hours.',
+};
+document.getElementById('buyBtn').addEventListener('click', ()=>{
+  document.getElementById('successMsg').textContent = successCopy[selectedPay];
+  successOverlay.classList.add('show');
+});
+document.getElementById('closeSuccess').addEventListener('click', ()=>{
+  successOverlay.classList.remove('show');
+  detailScreen.classList.remove('open');
+});
+
+renderList();
+
+// live countdowns
+setInterval(()=>{
+  deals.forEach(d=>{ if(d.mins>0) d.mins -= 1; });
+  document.querySelectorAll('.timer').forEach(el=>{
+    const d = deals.find(x=>x.id===Number(el.dataset.mins));
+    if(!d) return;
+    el.textContent = 'Expires in ' + fmt(d.mins);
+    el.classList.toggle('urgent', d.mins < 90);
+  });
+  if(activeDeal){
+    const val = document.getElementById('detailTimerVal');
+    if(val) val.textContent = fmt(activeDeal.mins);
+  }
+}, 60000);
+</script>
+</body>
+</html>
