@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meesho — Delivery Appointment Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#511449;
+    --plum-deep:#36092F;
+    --pink:#E8368F;
+    --orange:#FF7A30;
+    --bg:#FFF3F8;
+    --ink:#241627;
+    --muted:#8A7A90;
+    --line:#F0DCE8;
+    --green:#15895F;
+    --green-bg:#E6F6EF;
+    --card:#FFFFFF;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:linear-gradient(180deg,#FBE6F1 0%,#F3E6FB 45%,#EDEAFB 100%);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    height:100%;padding:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) body{background:linear-gradient(180deg,#2A1226,#1E1430);}
+  }
+
+  .phone{
+    width:100%;max-width:420px;height:min(900px, 96vh);
+    background:#000;border-radius:38px;padding:12px;
+    box-shadow:0 30px 60px -20px rgba(54,9,47,.45), 0 0 0 1px rgba(54,9,47,.06);
+  }
+  .screen{
+    position:relative;width:100%;height:100%;
+    background:var(--bg);border-radius:28px;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .statusbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 20px 2px;font-size:12px;font-weight:600;color:var(--ink);flex-shrink:0;
+  }
+
+  .step{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    background:var(--bg);opacity:0;pointer-events:none;
+    transform:translateY(12px);
+    transition:opacity .28s ease, transform .28s ease;
+  }
+  .step.active{opacity:1;pointer-events:auto;transform:translateY(0);z-index:2;}
+
+  .top{padding:16px 18px 4px;flex-shrink:0;display:flex;align-items:center;gap:10px;}
+  .top .mk{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--plum),#8A2470);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .top .tt{font-family:'Sora',sans-serif;font-weight:700;font-size:14.5px;color:var(--plum-deep);}
+  .top .ts{font-size:11px;color:var(--muted);}
+
+  .body{flex:1;overflow-y:auto;padding:4px 18px 16px;}
+  .body::-webkit-scrollbar{width:0;}
+
+  /* ---- Notification / lock screen (step 0) ---- */
+  .lockwrap{
+    flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    background:linear-gradient(180deg,#3B1240,#1E0A24);color:#fff;padding:0 20px;
+  }
+  .lockclock{font-family:'Sora',sans-serif;font-weight:700;font-size:52px;letter-spacing:1px;}
+  .lockdate{font-size:13px;opacity:.75;margin-bottom:34px;}
+  .notif{
+    width:100%;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:13px 14px;
+    display:flex;gap:11px;cursor:pointer;animation:drop .5s ease;
+  }
+  @keyframes drop{from{transform:translateY(-16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .notif .nicon{width:34px;height:34px;border-radius:9px;background:var(--pink);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .notif .ntxt{flex:1;}
+  .notif .ntitle{font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;}
+  .notif .ntitle span.time{font-weight:500;opacity:.6;font-size:10.5px;}
+  .notif .nbody{font-size:12px;opacity:.88;margin-top:3px;line-height:1.4;}
+  .taphint{margin-top:16px;font-size:11px;opacity:.55;}
+
+  /* ---- Generic card ---- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;}
+  .msg-title{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;margin:4px 0 6px;color:var(--plum-deep);}
+  .msg-sub{font-size:12.5px;color:#5A3A64;line-height:1.55;margin-bottom:2px;}
+  .reserved-chip{
+    display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);color:var(--green);
+    font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;margin-top:10px;
+  }
+
+  .sectionlbl{font-size:12.5px;font-weight:700;color:var(--muted);margin:18px 0 10px;}
+
+  .slot{
+    display:flex;align-items:center;gap:12px;
+    border:1.5px solid var(--line);border-radius:13px;padding:12px 14px;margin-bottom:9px;
+    cursor:pointer;background:#fff;transition:all .15s ease;position:relative;
+  }
+  .slot.selected{border-color:var(--pink);background:#FDF0F7;}
+  .radio{width:18px;height:18px;border-radius:50%;border:2px solid #D7C3D2;flex-shrink:0;position:relative;}
+  .slot.selected .radio{border-color:var(--pink);}
+  .slot.selected .radio::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--pink);}
+  .slot-text{flex:1;}
+  .slot-day{font-size:13px;font-weight:700;color:var(--ink);}
+  .slot-time{font-size:11.5px;color:var(--muted);margin-top:1px;}
+  .custom-picker{
+    background:#fff;border:1.5px solid var(--pink);border-radius:13px;
+    padding:12px 14px;margin:-2px 0 11px;
+  }
+  .cp-row{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+  .cp-row:last-child{margin-bottom:0;}
+  .cp-row label{font-size:11px;font-weight:700;color:var(--muted);}
+  .cp-row input, .cp-row select{
+    border:1.5px solid var(--line);border-radius:9px;padding:9px 10px;
+    font-size:13px;font-family:'Inter',sans-serif;color:var(--ink);background:#fff;
+  }
+  .cp-row input:focus, .cp-row select:focus{outline:none;border-color:var(--pink);}
+  .reco{
+    position:absolute;top:-8px;right:12px;background:var(--orange);color:#fff;
+    font-size:9px;font-weight:800;padding:2px 8px;border-radius:99px;
+  }
+
+  .bigbtn{
+    width:100%;border:none;border-radius:13px;padding:14px;
+    font-family:'Sora',sans-serif;font-weight:700;font-size:14.5px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .bigbtn.primary{background:linear-gradient(120deg,var(--pink),#C22577);color:#fff;}
+  .bigbtn.primary:disabled{opacity:.4;cursor:not-allowed;}
+  .bigbtn.ghost{background:#F6EEF4;color:var(--plum-deep);}
+  .bigbtn.outline{background:#fff;border:1.5px solid var(--line);color:var(--ink);}
+  .btnrow{display:flex;flex-direction:column;gap:10px;}
+
+  .cta-bar{padding:12px 18px calc(14px + env(safe-area-inset-bottom,0px));background:transparent;flex-shrink:0;}
+
+  /* ---- Confirmation ---- */
+  .checkwrap{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 6px 6px;}
+  .tick-lg{width:62px;height:62px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+  .checkwrap h3{font-family:'Sora',sans-serif;font-size:18px;margin:0 0 4px;}
+  .checkwrap p{font-size:12.5px;color:var(--muted);margin:0;}
+
+  .detailrow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);}
+  .detailrow:last-child{border-bottom:none;}
+  .detailrow .lbl{font-size:11.5px;color:var(--muted);width:100px;flex-shrink:0;padding-top:1px;}
+  .detailrow .val{font-size:12.5px;font-weight:600;color:var(--ink);}
+  .slotbadge{
+    background:#FDF0F7;color:var(--pink);font-weight:700;font-size:13px;
+    padding:8px 12px;border-radius:10px;display:inline-block;
+  }
+  .remind-note{display:flex;gap:9px;align-items:flex-start;background:#F3E9F7;border-radius:12px;padding:11px 13px;font-size:11.5px;color:#5A3A64;line-height:1.5;margin-top:4px;}
+
+  .demobtn{
+    margin-top:14px;width:100%;background:none;border:1.3px dashed #C9A9C2;color:#8A5582;
+    font-size:11px;font-weight:700;padding:9px;border-radius:10px;cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+
+  /* ---- Reminder (like a push notif banner inside app) ---- */
+  .remindcard{background:var(--card);border-radius:16px;padding:4px;margin-bottom:16px;overflow:hidden;border:1px solid var(--line);}
+  .remindcard .rhead{
+    background:linear-gradient(120deg,var(--plum),#7A1F5C);color:#fff;padding:13px 15px;
+    display:flex;align-items:center;gap:9px;border-radius:13px 13px 0 0;
+  }
+  .remindcard .rhead svg{flex-shrink:0;}
+  .remindcard .rhead .rtitle{font-size:12.5px;font-weight:700;}
+  .remindcard .rhead .rwhen{font-size:10px;opacity:.75;margin-left:auto;}
+  .remindcard .rbody{padding:14px 15px 15px;}
+  .remindcard .rbody .rwin{font-family:'Sora',sans-serif;font-weight:800;font-size:16px;color:var(--plum-deep);margin-bottom:6px;}
+  .remindcard .rbody p{font-size:12px;color:var(--muted);line-height:1.5;margin:0;}
+
+  /* ---- Delivered ---- */
+  .finalwrap{text-align:center;padding:20px 6px 6px;}
+  .finalwrap .tick-xl{width:78px;height:78px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+  .finalwrap h3{font-family:'Sora',sans-serif;font-size:19px;margin:0 0 4px;}
+  .savebanner{
+    margin-top:16px;background:linear-gradient(120deg,var(--green-bg),#D7F2E6);
+    border:1px solid #BCE6D2;border-radius:14px;padding:14px;text-align:center;
+  }
+  .savebanner .amt{font-family:'Sora',sans-serif;font-weight:800;font-size:22px;color:var(--green);}
+  .savebanner .lbl{font-size:11.5px;color:#2E6B52;font-weight:600;margin-top:2px;}
+
+  .stepper{display:flex;justify-content:center;gap:6px;padding:10px 0 2px;flex-shrink:0;}
+  .dot-s{width:6px;height:6px;border-radius:50%;background:var(--line);transition:all .2s ease;}
+  .dot-s.on{background:var(--pink);width:16px;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="screen">
+    <div class="statusbar">
+      <span>9:41</span>
+      <svg width="14" height="10" viewBox="0 0 14 10"><rect width="14" height="10" rx="2" fill="none" stroke="#241627" stroke-width="1"/><rect x="2" y="2" width="8" height="6" fill="#241627"/></svg>
+    </div>
+
+    <!-- STEP 0: Lock screen notification -->
+    <div class="step active" id="step0">
+      <div class="lockwrap">
+        <div class="lockclock">9:41</div>
+        <div class="lockdate">Saturday, 11 October</div>
+        <div class="notif" id="openNotif">
+          <div class="nicon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M21 8l-9 6-9-6M4 6h16v12H4z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="ntxt">
+            <div class="ntitle">Meesho <span class="time">now</span></div>
+            <div class="nbody">We couldn't deliver your order today — tap to pick a new time. Your order is safe with us.</div>
+          </div>
+        </div>
+        <div class="taphint">Tap the notification to continue →</div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Slot picker -->
+    <div class="step" id="step1">
+      <div class="top"><div class="mk"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7 9.5h10M9 14.5h6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></div><div><div class="tt">Meesho</div><div class="ts">Delivery update</div></div></div>
+      <div class="body">
+        <div class="card">
+          <div class="msg-title">We couldn't deliver your order today</div>
+          <div class="msg-sub">No worries — your order is still reserved. Nothing is lost, we just need a better time.</div>
+          <span class="reserved-chip">✓ Order #48271 reserved</span>
+        </div>
+        <div class="sectionlbl">When would you like us to deliver?</div>
+        <div id="slotList"></div>
+        <div class="custom-picker" id="customPicker" style="display:none;">
+          <div class="cp-row">
+            <label>Pick a date</label>
+            <input type="date" id="customDate">
+          </div>
+          <div class="cp-row">
+            <label>Pick a time window</label>
+            <select id="customTimeSel">
+              <option value="">Select a window</option>
+              <option value="8 – 11 AM">8 – 11 AM</option>
+              <option value="11 AM – 2 PM">11 AM – 2 PM</option>
+              <option value="2 – 5 PM">2 – 5 PM</option>
+              <option value="5 – 8 PM">5 – 8 PM</option>
+            </select>
+          </div>
+        </div>
+        <div class="sectionlbl" style="margin-top:4px;font-weight:500;color:#B596B0;">Slots are based on your location and rider availability nearby</div>
+      </div>
+      <div class="cta-bar">
+        <button class="bigbtn primary" id="confirmSlotBtn" disabled>Confirm delivery slot</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Confirmation -->
+    <div class="step" id="step2">
+      <div class="body" style="padding-top:20px;">
+        <div class="checkwrap">
+          <div class="tick-lg"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#15895F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Delivery appointment confirmed!</h3>
+          <p>We'll make sure your rider arrives in this exact window.</p>
+        </div>
+        <div class="card" style="margin-top:20px;">
+          <div class="slotbadge" id="confirmedSlot">Saturday, 3 – 6 PM</div>
+          <div style="margin-top:12px;">
+            <div class="detailrow"><div class="lbl">Order</div><div class="val">#48271</div></div>
+            <div class="detailrow"><div class="lbl">Delivery to</div><div class="val">Andheri East, Mumbai</div></div>
+            <div class="detailrow"><div class="lbl">Payment mode</div><div class="val">Cash on Delivery</div></div>
+          </div>
+        </div>
+        <div class="remind-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><path d="M12 8v5l3 2" stroke="#8A5582" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#8A5582" stroke-width="1.7"/></svg>
+          We'll remind you 2–3 hours before the rider arrives — just confirm you're available, and you're done.
+        </div>
+      </div>
+      <div class="cta-bar">
+        <button class="bigbtn ghost" id="viewOrderBtn">View order details</button>
+        <button class="demobtn" id="simulateBtn">⏱ Simulate: 2 hours before delivery (demo)</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Pre-arrival reminder -->
+    <div class="step" id="step3">
+      <div class="top"><div class="mk"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7 9.5h10M9 14.5h6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></div><div><div class="tt">Meesho</div><div class="ts">Arriving today</div></div></div>
+      <div class="body">
+        <div class="remindcard">
+          <div class="rhead">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2a6 6 0 00-6 6c0 4-2 5-2 7h16c0-2-2-3-2-7a6 6 0 00-6-6z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="#fff" stroke-width="1.5"/></svg>
+            <span class="rtitle">Your order arrives today!</span>
+            <span class="rwhen">2h ago</span>
+          </div>
+          <div class="rbody">
+            <div class="rwin">Delivery window: 3 – 6 PM</div>
+            <p>Please keep your phone available and be ready to receive the parcel. Order #48271 · Cash on Delivery.</p>
+          </div>
+        </div>
+        <div class="sectionlbl">Will you be available in this window?</div>
+      </div>
+      <div class="cta-bar">
+        <div class="btnrow">
+          <button class="bigbtn primary" id="availableBtn" style="background:linear-gradient(120deg,var(--green),#0E6B48);">I'm available</button>
+          <button class="bigbtn outline" id="rescheduleBtn">I need to reschedule</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Delivered -->
+    <div class="step" id="step4">
+      <div class="body" style="padding-top:26px;">
+        <div class="finalwrap">
+          <div class="tick-xl"><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#15895F" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Delivered successfully!</h3>
+          <p style="font-size:12.5px;color:var(--muted);">Order #48271 · delivered at 4:15 PM</p>
+        </div>
+        <div class="card" style="margin-top:18px;">
+          <div class="detailrow"><div class="lbl">Appointment</div><div class="val" id="finalSlot">Saturday, 3 – 6 PM</div></div>
+          <div class="detailrow"><div class="lbl">Outcome</div><div class="val">Customer available as selected</div></div>
+        </div>
+      </div>
+      <div class="cta-bar">
+        <button class="bigbtn primary" id="restartBtn">Replay demo</button>
+      </div>
+    </div>
+
+    <div class="stepper" id="stepper">
+      <span class="dot-s"></span><span class="dot-s"></span><span class="dot-s"></span><span class="dot-s"></span><span class="dot-s"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const slots = [
+  {day:'Today', time:'6 – 8 PM'},
+  {day:'Tomorrow', time:'10 AM – 1 PM'},
+  {day:'Saturday', time:'3 – 6 PM', reco:true},
+  {day:'Choose another time', time:'Pick a custom slot', custom:true},
+];
+let selectedSlotIdx = null;
+let confirmedSlotText = 'Saturday, 3 – 6 PM';
+const steps = ['step0','step1','step2','step3','step4'];
+const dots = document.querySelectorAll('.dot-s');
+const customPicker = document.getElementById('customPicker');
+const customDate = document.getElementById('customDate');
+const customTimeSel = document.getElementById('customTimeSel');
+
+// set min selectable date to today, for realism
+customDate.min = new Date().toISOString().split('T')[0];
+
+function goTo(stepId){
+  steps.forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById(stepId).classList.add('active');
+  const idx = steps.indexOf(stepId);
+  dots.forEach((d,i)=>d.classList.toggle('on', i===idx));
+}
+
+function fmtCustomDate(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+}
+
+function updateConfirmEnabled(){
+  const btn = document.getElementById('confirmSlotBtn');
+  if(selectedSlotIdx === null){ btn.disabled = true; return; }
+  const s = slots[selectedSlotIdx];
+  if(s.custom){
+    btn.disabled = !(customDate.value && customTimeSel.value);
+  } else {
+    btn.disabled = false;
+  }
+}
+
+function renderSlots(){
+  const wrap = document.getElementById('slotList');
+  wrap.innerHTML = slots.map((s,i)=>`
+    <div class="slot ${selectedSlotIdx===i?'selected':''}" data-idx="${i}">
+      ${s.reco ? '<span class="reco">RECOMMENDED</span>' : ''}
+      <div class="radio"></div>
+      <div class="slot-text">
+        <div class="slot-day">${s.day}</div>
+        <div class="slot-time">${s.time}</div>
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('.slot').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      selectedSlotIdx = Number(el.dataset.idx);
+      renderSlots();
+      customPicker.style.display = slots[selectedSlotIdx].custom ? 'block' : 'none';
+      updateConfirmEnabled();
+    });
+  });
+}
+renderSlots();
+
+customDate.addEventListener('change', updateConfirmEnabled);
+customTimeSel.addEventListener('change', updateConfirmEnabled);
+
+document.getElementById('openNotif').addEventListener('click', ()=> goTo('step1'));
+
+document.getElementById('confirmSlotBtn').addEventListener('click', ()=>{
+  const s = slots[selectedSlotIdx];
+  if(s.custom){
+    confirmedSlotText = `${fmtCustomDate(customDate.value)}, ${customTimeSel.value}`;
+  } else {
+    confirmedSlotText = `${s.day}, ${s.time}`;
+  }
+  document.getElementById('confirmedSlot').textContent = confirmedSlotText;
+  document.getElementById('finalSlot').textContent = confirmedSlotText;
+  goTo('step2');
+});
+
+document.getElementById('viewOrderBtn').addEventListener('click', ()=> goTo('step2'));
+document.getElementById('simulateBtn').addEventListener('click', ()=> goTo('step3'));
+
+document.getElementById('availableBtn').addEventListener('click', ()=> goTo('step4'));
+document.getElementById('rescheduleBtn').addEventListener('click', ()=>{
+  selectedSlotIdx = null;
+  customPicker.style.display = 'none';
+  customDate.value = '';
+  customTimeSel.value = '';
+  document.getElementById('confirmSlotBtn').disabled = true;
+  renderSlots();
+  goTo('step1');
+});
+
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  selectedSlotIdx = null;
+  customPicker.style.display = 'none';
+  customDate.value = '';
+  customTimeSel.value = '';
+  renderSlots();
+  document.getElementById('confirmSlotBtn').disabled = true;
+  goTo('step0');
+});
+</script>
+</body>
+</html>
