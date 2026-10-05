@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meesho Rider — Appointment Route</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#511449;
+    --plum-deep:#36092F;
+    --pink:#E8368F;
+    --orange:#FF7A30;
+    --bg:#F7F3FA;
+    --ink:#241627;
+    --muted:#8A7A90;
+    --line:#E9E0ED;
+    --green:#15895F;
+    --green-bg:#E6F6EF;
+    --amber:#B5790F;
+    --amber-bg:#FDF1DC;
+    --card:#FFFFFF;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:linear-gradient(180deg,#EDEAFB 0%,#F3E6FB 45%,#FBE6F1 100%);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    height:100%;padding:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) body{background:linear-gradient(180deg,#1E1430,#2A1226);}
+  }
+
+  .phone{
+    width:100%;max-width:420px;height:min(900px, 96vh);
+    background:#000;border-radius:38px;padding:12px;
+    box-shadow:0 30px 60px -20px rgba(54,9,47,.45), 0 0 0 1px rgba(54,9,47,.06);
+  }
+  .screen{
+    position:relative;width:100%;height:100%;
+    background:var(--bg);border-radius:28px;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .statusbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 20px 2px;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;
+    position:relative;z-index:3;
+  }
+
+  .appheader{
+    background:linear-gradient(120deg,var(--plum) 0%,#7A1F5C 100%);
+    color:#fff;padding:2px 18px 14px;flex-shrink:0;
+  }
+  .appheader .row1{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+  .appheader h2{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;margin:0;}
+  .ridertag{display:flex;align-items:center;gap:7px;}
+  .ridertag .avatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;}
+  .duty{font-size:10.5px;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.14);padding:4px 9px;border-radius:99px;font-weight:700;}
+  .duty .dot{width:6px;height:6px;border-radius:50%;background:#5FE3A1;}
+
+  .tabs{display:flex;gap:6px;margin-top:14px;background:rgba(255,255,255,.14);padding:4px;border-radius:12px;}
+  .tab{flex:1;text-align:center;padding:8px 0;border-radius:9px;font-size:12.5px;font-weight:700;color:rgba(255,255,255,.75);cursor:pointer;}
+  .tab.active{background:#fff;color:var(--plum-deep);}
+
+  .content{flex:1;overflow-y:auto;padding:14px 14px 10px;-webkit-overflow-scrolling:touch;}
+  .content::-webkit-scrollbar{width:0;}
+
+  .daylabel{font-size:12px;font-weight:700;color:var(--muted);margin:2px 2px 10px;display:flex;justify-content:space-between;}
+  .daylabel span.cnt{color:var(--pink);}
+
+  /* ---- Stop card ---- */
+  .stop{
+    display:flex;gap:11px;background:var(--card);border-radius:15px;padding:12px;
+    margin-bottom:10px;border:1px solid var(--line);cursor:pointer;position:relative;
+    transition:transform .12s ease;
+  }
+  .stop:active{transform:scale(.98);}
+  .stop.current{border-color:var(--pink);box-shadow:0 6px 18px -10px rgba(232,54,143,.45);}
+  .timeline{display:flex;flex-direction:column;align-items:center;width:18px;flex-shrink:0;padding-top:2px;}
+  .tdot{width:10px;height:10px;border-radius:50%;background:var(--line);flex-shrink:0;}
+  .tdot.done{background:var(--green);}
+  .tdot.current{background:var(--pink);box-shadow:0 0 0 4px #FBE0EE;}
+  .tline{width:2px;flex:1;background:var(--line);margin:3px 0;}
+
+  .stop-body{flex:1;min-width:0;}
+  .stop-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
+  .stop-time{font-family:'Sora',sans-serif;font-weight:700;font-size:13px;color:var(--plum-deep);}
+  .stop-order{font-size:10.5px;color:var(--muted);margin-top:1px;}
+  .badge{font-size:9px;font-weight:800;padding:3px 7px;border-radius:99px;white-space:nowrap;}
+  .badge.appt{background:#FDF0F7;color:var(--pink);}
+  .badge.done{background:var(--green-bg);color:var(--green);}
+  .badge.issue{background:var(--amber-bg);color:var(--amber);}
+  .stop-addr{font-size:12.5px;font-weight:600;margin-top:5px;}
+  .stop-tags{display:flex;gap:6px;margin-top:7px;}
+  .tag{font-size:9.5px;font-weight:700;color:var(--muted);background:#F3EEF6;padding:3px 8px;border-radius:7px;}
+
+  .bottomstat{
+    display:flex;border-top:1px solid var(--line);background:#fff;flex-shrink:0;
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+  }
+  .bstat{flex:1;text-align:center;}
+  .bstat .num{font-family:'Sora',sans-serif;font-weight:800;font-size:16px;color:var(--plum-deep);}
+  .bstat .lbl{font-size:9.5px;color:var(--muted);font-weight:600;margin-top:1px;}
+
+  /* ---- Detail overlay ---- */
+  .detail{
+    position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;
+    transform:translateY(100%);transition:transform .32s cubic-bezier(.22,.9,.32,1);z-index:6;
+  }
+  .detail.open{transform:translateY(0);}
+  .dhead{
+    background:linear-gradient(120deg,var(--plum),#7A1F5C);color:#fff;
+    padding:14px 16px 18px;flex-shrink:0;position:relative;
+  }
+  .dback{
+    width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);
+    display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;margin-bottom:10px;
+  }
+  .confirmchip{
+    display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);
+    padding:4px 10px;border-radius:99px;font-size:10.5px;font-weight:700;margin-bottom:8px;
+  }
+  .dhead h3{font-family:'Sora',sans-serif;font-size:17px;margin:0 0 3px;}
+  .dhead .sub{font-size:12px;opacity:.85;}
+
+  .dbody{flex:1;overflow-y:auto;padding:16px;}
+  .infocard{background:var(--card);border-radius:15px;border:1px solid var(--line);padding:4px 14px;margin-bottom:14px;}
+  .irow{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);}
+  .irow:last-child{border-bottom:none;}
+  .irow .ic{width:30px;height:30px;border-radius:9px;background:#F3EEF6;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .irow .txt .l{font-size:10.5px;color:var(--muted);font-weight:600;}
+  .irow .txt .v{font-size:13px;font-weight:700;color:var(--ink);margin-top:1px;}
+
+  .actionrow{display:flex;gap:10px;margin-bottom:14px;}
+  .actbtn{
+    flex:1;background:var(--card);border:1.5px solid var(--line);border-radius:13px;
+    padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;
+    font-size:11px;font-weight:700;color:var(--plum-deep);cursor:pointer;
+  }
+  .actbtn .ic{width:30px;height:30px;border-radius:50%;background:#F3EEF6;display:flex;align-items:center;justify-content:center;}
+
+  .windowcard{
+    background:linear-gradient(120deg,#FDF0F7,#F3E6FB);border:1px solid #F0C7E0;border-radius:14px;
+    padding:13px 15px;margin-bottom:14px;
+  }
+  .windowcard .l{font-size:11px;font-weight:700;color:#9A3D74;}
+  .windowcard .v{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:var(--plum-deep);margin-top:2px;}
+
+  .cta-bar{padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));background:#fff;border-top:1px solid var(--line);flex-shrink:0;display:flex;gap:10px;}
+  .bigbtn{border:none;border-radius:13px;padding:13px;font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;}
+  .bigbtn.primary{flex:1;background:linear-gradient(120deg,var(--pink),#C22577);color:#fff;}
+  .bigbtn.ghost{width:48px;background:#F3EEF6;color:var(--plum-deep);display:flex;align-items:center;justify-content:center;}
+
+  /* ---- Issue sheet ---- */
+  .sheet-overlay{
+    position:absolute;inset:0;background:rgba(36,22,39,.5);display:flex;align-items:flex-end;
+    opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:9;
+  }
+  .sheet-overlay.show{opacity:1;pointer-events:auto;}
+  .sheet{
+    width:100%;background:#fff;border-radius:22px 22px 0 0;padding:8px 18px calc(18px + env(safe-area-inset-bottom,0px));
+    transform:translateY(100%);transition:transform .28s ease;
+  }
+  .sheet-overlay.show .sheet{transform:translateY(0);}
+  .sheet .grabber{width:36px;height:4px;background:var(--line);border-radius:99px;margin:8px auto 14px;}
+  .sheet h4{font-family:'Sora',sans-serif;font-size:15px;margin:0 0 12px;}
+  .reasonopt{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:13px 4px;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:600;cursor:pointer;
+  }
+  .reasonopt:last-child{border-bottom:none;}
+
+  .toast{
+    position:absolute;left:16px;right:16px;bottom:88px;background:var(--plum-deep);color:#fff;
+    padding:12px 15px;border-radius:12px;font-size:12.5px;font-weight:600;
+    display:flex;align-items:center;gap:9px;
+    opacity:0;transform:translateY(10px);transition:all .25s ease;z-index:20;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="screen">
+    <div class="statusbar">
+      <span>9:41</span>
+      <svg width="14" height="10" viewBox="0 0 14 10"><rect width="14" height="10" rx="2" fill="none" stroke="#fff" stroke-width="1"/><rect x="2" y="2" width="8" height="6" fill="#fff"/></svg>
+    </div>
+
+    <div class="appheader">
+      <div class="row1">
+        <div class="ridertag">
+          <div class="avatar">RK</div>
+          <div>
+            <h2>Rider App</h2>
+          </div>
+        </div>
+        <div class="duty"><span class="dot"></span>On duty</div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-tab="today">Today (5)</div>
+        <div class="tab" data-tab="upcoming">Upcoming (3)</div>
+      </div>
+    </div>
+
+    <div class="content" id="mainContent"></div>
+
+    <div class="bottomstat" id="bottomstat">
+      <div class="bstat"><div class="num">2/5</div><div class="lbl">Delivered</div></div>
+      <div class="bstat"><div class="num">1</div><div class="lbl">Appointment</div></div>
+      <div class="bstat"><div class="num">12.4 km</div><div class="lbl">Route left</div></div>
+    </div>
+
+    <!-- Stop detail -->
+    <div class="detail" id="detailScreen">
+      <div class="dhead">
+        <button class="dback" id="detailBack">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 5 7 12l8 7" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="confirmchip" id="dConfirmChip">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Customer confirmed
+        </div>
+        <h3 id="dName">Priya Sharma</h3>
+        <div class="sub" id="dOrder">Order #48271</div>
+      </div>
+      <div class="dbody">
+        <div class="windowcard" id="dWindowCard">
+          <div class="l">Delivery window</div>
+          <div class="v" id="dWindow">Saturday, 3 – 6 PM</div>
+        </div>
+        <div class="actionrow">
+          <div class="actbtn" id="callAction">
+            <div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8a15 15 0 006.6 6.6l2.2-2.2a1 1 0 011-.25c1.1.37 2.3.57 3.6.57a1 1 0 011 1V20a1 1 0 01-1 1C10.5 21 3 13.5 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.3.2 2.5.57 3.6a1 1 0 01-.25 1z" stroke="#511449" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+            Call
+          </div>
+          <div class="actbtn" id="mapAction">
+            <div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 22s7-7.2 7-12.5A7 7 0 1 0 5 9.5C5 14.8 12 22 12 22z" stroke="#511449" stroke-width="1.6"/><circle cx="12" cy="9.5" r="2.4" stroke="#511449" stroke-width="1.6"/></svg></div>
+            Navigate
+          </div>
+          <div class="actbtn" id="issueAction">
+            <div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 16.5h.01" stroke="#511449" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#511449" stroke-width="1.6"/></svg></div>
+            Issue
+          </div>
+        </div>
+        <div class="infocard">
+          <div class="irow">
+            <div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 22s7-7.2 7-12.5A7 7 0 1 0 5 9.5C5 14.8 12 22 12 22z" fill="#8A7A90"/></svg></div>
+            <div class="txt"><div class="l">Address</div><div class="v" id="dAddr">Flat 302, Shree Residency, Andheri East, Mumbai</div></div>
+          </div>
+          <div class="irow">
+            <div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="#8A7A90" stroke-width="1.6"/><path d="M4 9h16" stroke="#8A7A90" stroke-width="1.6"/></svg></div>
+            <div class="txt"><div class="l">Payment mode</div><div class="v" id="dPay">Cash on Delivery · ₹699</div></div>
+          </div>
+          <div class="irow">
+            <div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 8v5l3 2" stroke="#8A7A90" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#8A7A90" stroke-width="1.6"/></svg></div>
+            <div class="txt"><div class="l">Why this stop is here</div><div class="v" id="dWhy">Customer booked this exact slot after a missed attempt — high chance of success</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cta-bar">
+        <button class="bigbtn ghost" id="moreBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.6" fill="#511449"/><circle cx="12" cy="12" r="1.6" fill="#511449"/><circle cx="19" cy="12" r="1.6" fill="#511449"/></svg>
+        </button>
+        <button class="bigbtn primary" id="deliverBtn">Mark as delivered</button>
+      </div>
+    </div>
+
+    <!-- Issue bottom sheet -->
+    <div class="sheet-overlay" id="issueSheet">
+      <div class="sheet">
+        <div class="grabber"></div>
+        <h4>What's happening at this stop?</h4>
+        <div class="reasonopt" data-reason="unavailable">Customer not available <span>›</span></div>
+        <div class="reasonopt" data-reason="unreachable">Can't reach by phone <span>›</span></div>
+        <div class="reasonopt" data-reason="wrongaddr">Address doesn't match <span>›</span></div>
+        <div class="reasonopt" data-reason="refused">Customer refused order <span>›</span></div>
+        <div class="reasonopt" data-reason="cancel" style="color:#B00000;">Cancel, close sheet</div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script>
+const todayStops = [
+  {time:'12:00 PM', order:'#38921', addr:'Bandra West', status:'done', appt:false},
+  {time:'2:00 PM', order:'#77411', addr:'Powai', status:'done', appt:false},
+  {time:'3:00 PM', order:'#48271', addr:'Andheri East', status:'current', appt:true,
+    name:'Priya Sharma', window:'Saturday, 3 – 6 PM',
+    addrFull:'Flat 302, Shree Residency, Andheri East, Mumbai', pay:'Cash on Delivery · ₹699',
+    why:"Customer booked this exact slot after a missed attempt — high chance of success"},
+  {time:'5:30 PM', order:'#55120', addr:'Ghatkopar', status:'pending', appt:false},
+  {time:'6:15 PM', order:'#60239', addr:'Vikhroli', status:'pending', appt:false},
+];
+
+const upcomingStops = [
+  {date:'Tomorrow', time:'10 AM – 1 PM', order:'#48902', addr:'Chakala', name:'Rohit Mehta',
+    addrFull:'B-12, Lake View Apartments, Chakala', pay:'Prepaid', why:"Customer rescheduled from a missed attempt yesterday"},
+  {date:'Mon, 14 Oct', time:'3 – 6 PM', order:'#51230', addr:'Marol', name:'Anita Desai',
+    addrFull:'Shop 4, Marol Naka Market', pay:'Cash on Delivery · ₹449', why:"First-ever appointment booking for this address"},
+  {date:'Tue, 15 Oct', time:'8 – 11 AM', order:'#52110', addr:'Sakinaka', name:'Faizan Sheikh',
+    addrFull:'204, Iqbal Chawl, Sakinaka', pay:'Cash on Delivery · ₹899', why:"Customer confirmed via reminder notification"},
+];
+
+const content = document.getElementById('mainContent');
+const bottomstat = document.getElementById('bottomstat');
+let activeTab = 'today';
+let activeStopIdx = null;
+
+function renderToday(){
+  bottomstat.style.display = 'flex';
+  const done = todayStops.filter(s=>s.status==='done').length;
+  bottomstat.children[0].querySelector('.num').textContent = `${done}/${todayStops.length}`;
+  content.innerHTML = `
+    <div class="daylabel"><span>Today's route · 5 stops</span><span class="cnt">1 appointment</span></div>
+    ${todayStops.map((s,i)=>`
+      <div class="stop ${s.status==='current'?'current':''}" data-idx="${i}">
+        <div class="timeline">
+          <div class="tdot ${s.status==='done'?'done':s.status==='current'?'current':''}"></div>
+          ${i<todayStops.length-1 ? '<div class="tline"></div>' : ''}
+        </div>
+        <div class="stop-body">
+          <div class="stop-top">
+            <div>
+              <div class="stop-time">${s.time}</div>
+              <div class="stop-order">Order ${s.order}</div>
+            </div>
+            ${s.status==='done' ? '<span class="badge done">Delivered</span>' : s.appt ? '<span class="badge appt">Appointment</span>' : ''}
+          </div>
+          <div class="stop-addr">${s.addr}</div>
+          <div class="stop-tags">
+            ${s.appt ? '<span class="tag">Customer confirmed</span>' : '<span class="tag">Standard stop</span>'}
+          </div>
+        </div>
+      </div>
+    `).join('')}
+  `;
+  content.querySelectorAll('.stop').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const idx = Number(el.dataset.idx);
+      const s = todayStops[idx];
+      if(!s.appt) { showToast('Standard stop — no appointment details to show'); return; }
+      openDetail(s, idx);
+    });
+  });
+}
+
+function renderUpcoming(){
+  bottomstat.style.display = 'none';
+  content.innerHTML = `
+    <div class="daylabel"><span>Upcoming confirmed appointments</span><span class="cnt">3 booked</span></div>
+    ${upcomingStops.map((s,i)=>`
+      <div class="stop" data-upidx="${i}">
+        <div class="timeline"><div class="tdot current"></div></div>
+        <div class="stop-body">
+          <div class="stop-top">
+            <div>
+              <div class="stop-time">${s.date}</div>
+              <div class="stop-order">${s.time} · Order ${s.order}</div>
+            </div>
+            <span class="badge appt">Appointment</span>
+          </div>
+          <div class="stop-addr">${s.addr}</div>
+          <div class="stop-tags"><span class="tag">Added to future route</span></div>
+        </div>
+      </div>
+    `).join('')}
+  `;
+  content.querySelectorAll('.stop').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const idx = Number(el.dataset.upidx);
+      const s = upcomingStops[idx];
+      openDetail({...s, window:`${s.date}, ${s.time}`, addr:s.addr}, null);
+    });
+  });
+}
+
+function openDetail(s, idx){
+  activeStopIdx = idx;
+  document.getElementById('dName').textContent = s.name || 'Customer';
+  document.getElementById('dOrder').textContent = 'Order ' + s.order;
+  document.getElementById('dWindow').textContent = s.window;
+  document.getElementById('dAddr').textContent = s.addrFull || s.addr;
+  document.getElementById('dPay').textContent = s.pay || '—';
+  document.getElementById('dWhy').textContent = s.why || '';
+  document.getElementById('deliverBtn').style.display = (idx !== null) ? 'block' : 'none';
+  document.getElementById('detailScreen').classList.add('open');
+}
+
+document.getElementById('detailBack').addEventListener('click', ()=>{
+  document.getElementById('detailScreen').classList.remove('open');
+});
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    activeTab = t.dataset.tab;
+    activeTab === 'today' ? renderToday() : renderUpcoming();
+  });
+});
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+document.getElementById('callAction').addEventListener('click', ()=> showToast('📞 Calling customer…'));
+document.getElementById('mapAction').addEventListener('click', ()=> showToast('🧭 Opening turn-by-turn navigation…'));
+document.getElementById('issueAction').addEventListener('click', ()=> document.getElementById('issueSheet').classList.add('show'));
+document.getElementById('moreBtn').addEventListener('click', ()=> document.getElementById('issueSheet').classList.add('show'));
+
+document.getElementById('issueSheet').addEventListener('click', (e)=>{
+  if(e.target.id === 'issueSheet') document.getElementById('issueSheet').classList.remove('show');
+});
+document.querySelectorAll('.reasonopt').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.getElementById('issueSheet').classList.remove('show');
+    const reason = el.dataset.reason;
+    if(reason === 'cancel') return;
+    if(activeStopIdx !== null && todayStops[activeStopIdx]){
+      todayStops[activeStopIdx].status = 'issue';
+    }
+    showToast('Logged — this stop is routed back into the appointment queue, not marked RTO');
+    setTimeout(()=>{
+      document.getElementById('detailScreen').classList.remove('open');
+      renderToday();
+    }, 900);
+  });
+});
+
+document.getElementById('deliverBtn').addEventListener('click', ()=>{
+  if(activeStopIdx !== null){
+    todayStops[activeStopIdx].status = 'done';
+  }
+  document.getElementById('detailScreen').classList.remove('open');
+  showToast('✓ Delivered — appointment kept, no reattempt needed');
+  setTimeout(renderToday, 300);
+});
+
+renderToday();
+</script>
+</body>
+</html>
