@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Valmo — Partner Performance Scorecard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#511449; --plum-deep:#36092F; --pink:#E8368F; --orange:#FF7A30;
+    --bg:#F7F4FA; --ink:#241627; --muted:#8A7A90; --line:#E7DEEC; --card:#fff;
+    --elite:#15895F; --elite-bg:#E6F6EF;
+    --strong:#2E5FA3; --strong-bg:#E3EEFB;
+    --watch:#B5790F; --watch-bg:#FDF1DC;
+    --prob:#C0392B; --prob-bg:#FBE3E0;
+    --exit:#7A1212; --exit-bg:#F5D9D9;
+    --gate:#B00020;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    background:var(--bg); font-family:'Inter',system-ui,-apple-system,sans-serif; color:var(--ink);
+    padding:22px clamp(14px,3vw,34px) 40px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) body{background:#1C1420;color:#F2E9F0;}
+    :root:not([data-theme="light"]) .card{background:#2A2030;}
+  }
+  h1,h2,h3{font-family:'Sora',sans-serif;margin:0;}
+
+  .topbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:18px;}
+  .topbar h1{font-size:22px;color:var(--plum-deep);}
+  .topbar .meta{font-size:12.5px;color:var(--muted);margin-top:4px;}
+  .meta .pill{background:#F3EEF6;padding:3px 9px;border-radius:99px;font-weight:700;margin-right:6px;display:inline-block;margin-top:4px;}
+
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .search{
+    border:1.5px solid var(--line);border-radius:10px;padding:9px 13px;font-size:13px;
+    font-family:'Inter';width:210px;background:#fff;
+  }
+  .search:focus{outline:none;border-color:var(--pink);}
+  .chip{
+    border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:7px 14px;
+    font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;
+  }
+  .chip.active{border-color:var(--pink);color:var(--pink);background:#FDF0F7;}
+
+  .gatebanner{
+    display:flex;align-items:center;gap:12px;background:var(--gate);color:#fff;border-radius:14px;
+    padding:13px 18px;margin-bottom:18px;cursor:pointer;
+  }
+  .gatebanner b{font-weight:800;}
+  .gatebanner .arrow{margin-left:auto;font-weight:700;}
+
+  .kpirow{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;}
+  @media (max-width:900px){.kpirow{grid-template-columns:repeat(3,1fr);}}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;}
+  .kpi .num{font-family:'Sora',sans-serif;font-weight:800;font-size:21px;}
+  .kpi .lbl{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:2px;}
+  .kpi.elite .num{color:var(--elite);} .kpi.strong .num{color:var(--strong);}
+  .kpi.watch .num{color:var(--watch);} .kpi.prob .num{color:var(--prob);} .kpi.exit .num{color:var(--exit);}
+
+  .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);
+    padding:12px 14px;border-bottom:1px solid var(--line);background:#FBF8FC;font-weight:700;
+  }
+  tbody td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr{cursor:pointer;transition:background .12s ease;}
+  tbody tr:hover{background:#FBF5F9;}
+  .pname{font-weight:700;}
+  .pcluster{font-size:11.5px;color:var(--muted);}
+
+  .tierbadge{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:99px;}
+  .tierbadge.elite{background:var(--elite-bg);color:var(--elite);}
+  .tierbadge.strong{background:var(--strong-bg);color:var(--strong);}
+  .tierbadge.watch{background:var(--watch-bg);color:var(--watch);}
+  .tierbadge.probation{background:var(--prob-bg);color:var(--prob);}
+  .tierbadge.exit{background:var(--exit-bg);color:var(--exit);}
+  .tierbadge.gated{background:var(--gate);color:#fff;}
+
+  .scorecell{display:flex;align-items:center;gap:8px;}
+  .scorebar{width:60px;height:6px;border-radius:99px;background:var(--line);overflow:hidden;}
+  .scorebar i{display:block;height:100%;border-radius:99px;}
+  .pctgood{color:var(--elite);font-weight:700;}
+  .pctbad{color:var(--prob);font-weight:700;}
+  .pctmid{color:var(--watch);font-weight:700;}
+  .viewbtn{
+    border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:6px 13px;
+    font-size:11.5px;font-weight:700;color:var(--plum-deep);cursor:pointer;
+  }
+
+  /* ---- Side panel ---- */
+  .scrim{position:fixed;inset:0;background:rgba(36,22,39,.45);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:10;}
+  .scrim.show{opacity:1;pointer-events:auto;}
+  .panel{
+    position:fixed;top:0;right:0;bottom:0;width:min(480px,94vw);background:var(--bg);
+    box-shadow:-20px 0 50px -20px rgba(54,9,47,.35);transform:translateX(100%);
+    transition:transform .3s cubic-bezier(.22,.9,.32,1);z-index:11;overflow-y:auto;
+  }
+  .panel.show{transform:translateX(0);}
+  .panelhead{background:linear-gradient(120deg,var(--plum),#7A1F5C);color:#fff;padding:18px 20px 22px;position:relative;}
+  .panelclose{
+    position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;
+    background:rgba(255,255,255,.16);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .panelhead h2{font-size:18px;}
+  .panelhead .pc{font-size:12px;opacity:.85;margin-top:2px;}
+  .panelbody{padding:18px 20px 30px;}
+
+  .gatealert{
+    background:var(--gate);color:#fff;border-radius:13px;padding:13px 15px;margin-bottom:16px;font-size:12.5px;line-height:1.5;
+  }
+  .gatealert b{display:block;font-size:13.5px;margin-bottom:3px;}
+
+  .scorehero{display:flex;align-items:center;gap:18px;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px;margin-bottom:16px;}
+  .ring{width:84px;height:84px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;}
+  .ring .inner{position:absolute;inset:7px;background:var(--card);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring .inner .n{font-family:'Sora',sans-serif;font-weight:800;font-size:21px;}
+  .ring .inner .s{font-size:8.5px;color:var(--muted);font-weight:700;}
+
+  .cat{margin-bottom:11px;}
+  .cat-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;}
+  .cat-top .n{font-weight:700;}
+  .cat-top .w{color:var(--muted);font-size:10.5px;}
+  .cat-bar{height:7px;border-radius:99px;background:var(--line);overflow:hidden;}
+  .cat-bar i{display:block;height:100%;background:var(--pink);border-radius:99px;}
+
+  .sectitle{font-size:12.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin:18px 0 10px;}
+
+  .gaugecard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;}
+  .gaugerow{display:flex;justify-content:space-between;align-items:center;}
+  .gaugerow .v{font-family:'Sora',sans-serif;font-weight:800;font-size:19px;}
+  .gaugerow .t{font-size:11.5px;color:var(--muted);}
+  .threshline{font-size:10.5px;color:var(--muted);margin-top:6px;}
+
+  .formulachip{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;font-weight:700;color:var(--plum-deep);margin-top:8px;}
+  .fpart{background:#F3EEF6;padding:4px 9px;border-radius:8px;}
+
+  .donutwrap{display:flex;align-items:center;gap:16px;}
+  .donut{width:76px;height:76px;border-radius:50%;flex-shrink:0;}
+  .donutlegend{font-size:12px;line-height:1.9;}
+  .ldot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;}
+
+  .ladder{display:flex;gap:4px;margin-top:8px;}
+  .lseg{flex:1;height:8px;border-radius:99px;position:relative;}
+  .lmarker{
+    position:absolute;top:-16px;left:50%;transform:translateX(-50%);
+    font-size:16px;
+  }
+  .ladderlabels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-weight:700;margin-top:5px;}
+
+  .incentivebox{background:linear-gradient(120deg,var(--elite-bg),#D7F2E6);border:1px solid #BCE6D2;border-radius:14px;padding:14px;margin-top:4px;}
+  .incentivebox .amt{font-family:'Sora',sans-serif;font-weight:800;font-size:22px;color:var(--elite);}
+  .incentivebox .lbl{font-size:11px;color:#2E6B52;font-weight:700;}
+  .incentivebox .calc{font-size:11px;color:#2E6B52;margin-top:6px;line-height:1.6;}
+
+  .actionrow{display:flex;gap:10px;margin-top:18px;}
+  .abtn{flex:1;border:none;border-radius:12px;padding:12px;font-family:'Sora',sans-serif;font-weight:700;font-size:13px;cursor:pointer;}
+  .abtn.primary{background:linear-gradient(120deg,var(--pink),#C22577);color:#fff;}
+  .abtn.danger{background:var(--gate);color:#fff;}
+  .abtn.ghost{background:#F3EEF6;color:var(--plum-deep);}
+
+  .toast{
+    position:fixed;left:50%;bottom:28px;transform:translate(-50%,16px);background:var(--plum-deep);color:#fff;
+    padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:all .25s ease;z-index:30;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Partner Performance Scorecard</h1>
+    <div class="meta">
+      <span class="pill">Rolling 4 weeks</span>
+      <span class="pill">Updated weekly</span>
+      <span class="pill">Min. 150 orders to qualify</span>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input class="search" id="searchBox" placeholder="Search partner or cluster…">
+    <div class="chip active" data-tier="all">All (8)</div>
+    <div class="chip" data-tier="elite">Elite</div>
+    <div class="chip" data-tier="strong">Strong</div>
+    <div class="chip" data-tier="watch">Watch</div>
+    <div class="chip" data-tier="probation">Probation</div>
+    <div class="chip" data-tier="exit">Exit review</div>
+  </div>
+</div>
+
+<div class="gatebanner" id="gateBanner">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 16.5h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="2"/></svg>
+  <span><b>1 hard-gate flag</b> — Royal Movers (Dombivli) has confirmed fake attempts above threshold. Allocation suspended pending 72-hour review.</span>
+  <span class="arrow">View →</span>
+</div>
+
+<div class="kpirow">
+  <div class="kpi"><div class="num">8</div><div class="lbl">Total partners scored</div></div>
+  <div class="kpi elite"><div class="num">2</div><div class="lbl">Elite (≥85)</div></div>
+  <div class="kpi strong"><div class="num">2</div><div class="lbl">Strong (70–84)</div></div>
+  <div class="kpi watch"><div class="num">1</div><div class="lbl">Watch (55–69)</div></div>
+  <div class="kpi prob"><div class="num">1</div><div class="lbl">Probation (40–54)</div></div>
+  <div class="kpi exit"><div class="num">1</div><div class="lbl">Exit review (&lt;40)</div></div>
+</div>
+
+<div class="tablewrap">
+  <table>
+    <thead><tr>
+      <th>Partner</th><th>Score</th><th>Tier</th><th>1st attempt ≤24h</th><th>Verified attempt</th><th>RTOs (attributable)</th><th></th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="panel" id="panel">
+  <div class="panelhead">
+    <button class="panelclose" id="panelClose">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <h2 id="pName">—</h2>
+    <div class="pc" id="pCluster">—</div>
+  </div>
+  <div class="panelbody" id="panelBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const tierMeta = {
+  elite:{label:'Elite', color:'var(--elite)', min:85},
+  strong:{label:'Strong', color:'var(--strong)', min:70},
+  watch:{label:'Watch', color:'var(--watch)', min:55},
+  probation:{label:'Probation', color:'var(--prob)', min:40},
+  exit:{label:'Exit review', color:'var(--exit)', min:0},
+};
+
+function tierOf(score){
+  if(score>=85) return 'elite';
+  if(score>=70) return 'strong';
+  if(score>=55) return 'watch';
+  if(score>=40) return 'probation';
+  return 'exit';
+}
+
+const cats = [
+  {key:'delivery', label:'Delivery Outcomes', weight:30},
+  {key:'integrity', label:'Attempt Integrity', weight:25},
+  {key:'cx', label:'Customer Experience', weight:15},
+  {key:'compliance', label:'Compliance & Cash', weight:20},
+  {key:'network', label:'Network Health', weight:10},
+];
+
+const partners = [
+  {name:'Shree Logistics', cluster:'Andheri cluster', delivery:92, integrity:94, cx:97, compliance:90, network:80,
+   firstAttempt:94, verified:97, rtoTotal:120, rtoAttribShare:0.15, deliveries:2200, rtoImprovePP:3.4, gated:false},
+  {name:'Metro Express', cluster:'Powai cluster', delivery:88, integrity:90, cx:93, compliance:85, network:78,
+   firstAttempt:91, verified:95, rtoTotal:140, rtoAttribShare:0.20, deliveries:1900, rtoImprovePP:2.6, gated:false},
+  {name:'Sunrise Delivery', cluster:'Ghatkopar cluster', delivery:80, integrity:78, cx:85, compliance:75, network:70,
+   firstAttempt:82, verified:88, rtoTotal:160, rtoAttribShare:0.32, deliveries:1700, rtoImprovePP:0, gated:false},
+  {name:'Kiran Partners', cluster:'Thane cluster', delivery:74, integrity:72, cx:80, compliance:68, network:65,
+   firstAttempt:79, verified:84, rtoTotal:150, rtoAttribShare:0.38, deliveries:1600, rtoImprovePP:0, gated:false},
+  {name:'Vikas Logistics', cluster:'Vashi cluster', delivery:60, integrity:58, cx:72, compliance:55, network:60,
+   firstAttempt:71, verified:76, rtoTotal:130, rtoAttribShare:0.45, deliveries:1400, rtoImprovePP:0, gated:false},
+  {name:'Om Sai Carriers', cluster:'Bhiwandi cluster', delivery:45, integrity:42, cx:60, compliance:38, network:50,
+   firstAttempt:58, verified:61, rtoTotal:145, rtoAttribShare:0.60, deliveries:1250, rtoImprovePP:0, gated:false},
+  {name:'Speedy Express', cluster:'Kalyan cluster', delivery:25, integrity:20, cx:40, compliance:22, network:35,
+   firstAttempt:40, verified:38, rtoTotal:110, rtoAttribShare:0.72, deliveries:900, rtoImprovePP:0, gated:false},
+  {name:'Royal Movers', cluster:'Dombivli cluster', delivery:78, integrity:74, cx:82, compliance:70, network:68,
+   firstAttempt:85, verified:90, rtoTotal:135, rtoAttribShare:0.30, deliveries:1550, rtoImprovePP:0, gated:true,
+   gateReason:'Confirmed fake attempts above threshold'},
+];
+
+partners.forEach(p=>{
+  p.score = Math.round(p.delivery*0.30 + p.integrity*0.25 + p.cx*0.15 + p.compliance*0.20 + p.network*0.10);
+  p.tier = tierOf(p.score);
+});
+
+let activeFilter = 'all';
+let searchTerm = '';
+
+function pctClass(v, goodAt, badAt){
+  if(v>=goodAt) return 'pctgood';
+  if(v<badAt) return 'pctbad';
+  return 'pctmid';
+}
+
+function renderTable(){
+  const tbody = document.getElementById('tbody');
+  const rows = partners.filter(p=>{
+    const tierMatch = activeFilter==='all' || p.tier===activeFilter;
+    const searchMatch = (p.name+p.cluster).toLowerCase().includes(searchTerm.toLowerCase());
+    return tierMatch && searchMatch;
+  }).sort((a,b)=>b.score-a.score);
+
+  tbody.innerHTML = rows.map(p=>`
+    <tr data-name="${p.name}">
+      <td><div class="pname">${p.name}</div><div class="pcluster">${p.cluster}</div></td>
+      <td>
+        <div class="scorecell">
+          <b>${p.score}</b>
+          <div class="scorebar"><i style="width:${p.score}%;background:${tierMeta[p.tier].color}"></i></div>
+        </div>
+      </td>
+      <td>${p.gated ? '<span class="tierbadge gated">Suspended</span>' : `<span class="tierbadge ${p.tier}">${tierMeta[p.tier].label}</span>`}</td>
+      <td class="${pctClass(p.firstAttempt,90,75)}">${p.firstAttempt}%</td>
+      <td class="${pctClass(p.verified,90,75)}">${p.verified}%</td>
+      <td>${p.rtoTotal} <span style="color:var(--muted);font-weight:500;">(${Math.round(p.rtoTotal*p.rtoAttribShare)} attrib.)</span></td>
+      <td><button class="viewbtn">View →</button></td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    tr.addEventListener('click', ()=> openPanel(partners.find(p=>p.name===tr.dataset.name)));
+  });
+}
+
+function donutGradient(excludedPct){
+  const exDeg = excludedPct*360;
+  return `conic-gradient(#15895F 0deg ${exDeg}deg, #C0392B ${exDeg}deg 360deg)`;
+}
+
+function openPanel(p){
+  document.getElementById('pName').textContent = p.name;
+  document.getElementById('pCluster').textContent = p.cluster;
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--' + (p.tier==='elite'?'elite':p.tier==='strong'?'strong':p.tier==='watch'?'watch':p.tier==='probation'?'prob':'exit')).trim();
+  const excluded = 1 - p.rtoAttribShare;
+
+  let html = '';
+  if(p.gated){
+    html += `<div class="gatealert"><b>🚫 Hard gate triggered</b>${p.gateReason} — immediate suspension of new allocation, pending 72-hour review with evidence. This overrides the score below entirely.</div>`;
+  }
+
+  html += `
+    <div class="scorehero">
+      <div class="ring" style="background:conic-gradient(${color} ${p.score*3.6}deg, var(--line) 0deg);">
+        <div class="inner"><div class="n">${p.score}</div><div class="s">/ 100</div></div>
+      </div>
+      <div>
+        <span class="tierbadge ${p.gated?'gated':p.tier}">${p.gated?'Suspended':tierMeta[p.tier].label}</span>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:8px;">${p.deliveries.toLocaleString()} deliveries this period</div>
+      </div>
+    </div>
+
+    <div class="sectitle">Score breakdown (100 points)</div>
+    ${cats.map(c=>`
+      <div class="cat">
+        <div class="cat-top"><span class="n">${c.label}</span><span class="w">${c.weight}% weight · raw ${p[c.key]}/100</span></div>
+        <div class="cat-bar"><i style="width:${p[c.key]}%;"></i></div>
+      </div>
+    `).join('')}
+
+    <div class="sectitle">Partner-added delay</div>
+    <div class="gaugecard">
+      <div class="gaugerow"><span class="v ${pctClass(p.firstAttempt,90,75)}">${p.firstAttempt}%</span><span class="t">first attempt within 24h of LMDC arrival</span></div>
+      <div class="threshline">≥ 90% → green · &lt; 75% → red (expected vs. actual first-attempt timing)</div>
+    </div>
+
+    <div class="gaugecard">
+      <div class="gaugerow"><span class="v ${pctClass(p.verified,90,75)}">${p.verified}%</span><span class="t">verified-attempt rate</span></div>
+      <div class="formulachip">
+        <span class="fpart">GPS</span>+<span class="fpart">Call</span>+<span class="fpart">Dwell</span>+<span class="fpart">Customer confirmation</span>
+      </div>
+    </div>
+
+    <div class="sectitle">RTO attribution (last 4 weeks, ${p.rtoTotal} total)</div>
+    <div class="gaugecard">
+      <div class="donutwrap">
+        <div class="donut" style="background:${donutGradient(excluded)}"></div>
+        <div class="donutlegend">
+          <div><span class="ldot" style="background:#15895F;"></span>Excluded (${Math.round(excluded*100)}%) — customer, seller, network, weather, wrong allocation</div>
+          <div><span class="ldot" style="background:#C0392B;"></span>Partner-attributable (${Math.round(p.rtoAttribShare*100)}%) — ${Math.round(p.rtoTotal*p.rtoAttribShare)} RTOs scored</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sectitle">Performance ladder</div>
+    <div class="gaugecard">
+      <div class="ladder">
+        <div class="lseg" style="background:var(--exit-bg);">${p.tier==='exit'?'<div class="lmarker">▲</div>':''}</div>
+        <div class="lseg" style="background:var(--prob-bg);">${p.tier==='probation'?'<div class="lmarker">▲</div>':''}</div>
+        <div class="lseg" style="background:var(--watch-bg);">${p.tier==='watch'?'<div class="lmarker">▲</div>':''}</div>
+        <div class="lseg" style="background:var(--strong-bg);">${p.tier==='strong'?'<div class="lmarker">▲</div>':''}</div>
+        <div class="lseg" style="background:var(--elite-bg);">${p.tier==='elite'?'<div class="lmarker">▲</div>':''}</div>
+      </div>
+      <div class="ladderlabels"><span>Exit &lt;40</span><span>Probation</span><span>Watch</span><span>Strong</span><span>Elite ≥85</span></div>
+    </div>
+
+    ${p.tier==='elite' && !p.gated ? `
+    <div class="sectitle">Incentive calculation</div>
+    <div class="incentivebox">
+      <div class="amt">₹${Math.round(p.deliveries*(p.rtoImprovePP/100)*120*0.25).toLocaleString()}</div>
+      <div class="lbl">Elite partner bonus this period</div>
+      <div class="calc">
+        ${p.deliveries.toLocaleString()} deliveries × ${p.rtoImprovePP}pp fewer RTOs than expected = ${Math.round(p.deliveries*(p.rtoImprovePP/100))} RTOs avoided<br>
+        ${Math.round(p.deliveries*(p.rtoImprovePP/100))} × ₹120 reverse-logistics cost avoided = ₹${Math.round(p.deliveries*(p.rtoImprovePP/100)*120).toLocaleString()} saved<br>
+        25% of avoided savings → bonus. Illustrative, subject to pilot validation.
+      </div>
+    </div>` : ''}
+
+    <div class="actionrow">
+      ${p.gated ? `<button class="abtn danger" data-action="offboard">Initiate offboarding review</button>`
+        : p.tier==='elite' ? `<button class="abtn primary" data-action="bonus">Approve elite bonus</button>`
+        : (p.tier==='watch'||p.tier==='probation') ? `<button class="abtn primary" data-action="warning">Send written warning</button>`
+        : p.tier==='exit' ? `<button class="abtn danger" data-action="offboard">Initiate offboarding review</button>`
+        : `<button class="abtn primary" data-action="ack">Acknowledge — standard allocation</button>`}
+      <button class="abtn ghost" data-action="note">Add coaching note</button>
+    </div>
+  `;
+
+  document.getElementById('panelBody').innerHTML = html;
+  document.getElementById('panel').classList.add('show');
+  document.getElementById('scrim').classList.add('show');
+
+  document.querySelectorAll('.abtn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const msgs = {
+        bonus:'✓ Elite bonus approved and queued for next payout cycle',
+        warning:'✓ Written warning sent, 14-day improvement plan attached',
+        offboard:'✓ Offboarding review initiated — backfill coverage required before exit',
+        ack:'✓ Acknowledged — standard allocation and terms continue',
+        note:'✓ Coaching note added to partner file',
+      };
+      showToast(msgs[b.dataset.action] || 'Done');
+    });
+  });
+}
+
+function closePanel(){
+  document.getElementById('panel').classList.remove('show');
+  document.getElementById('scrim').classList.remove('show');
+}
+
+document.getElementById('panelClose').addEventListener('click', closePanel);
+document.getElementById('scrim').addEventListener('click', closePanel);
+
+document.getElementById('gateBanner').addEventListener('click', ()=>{
+  openPanel(partners.find(p=>p.gated));
+});
+
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    activeFilter = c.dataset.tier;
+    renderTable();
+  });
+});
+
+document.getElementById('searchBox').addEventListener('input', (e)=>{
+  searchTerm = e.target.value;
+  renderTable();
+});
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+renderTable();
+</script>
+</body>
+</html>
